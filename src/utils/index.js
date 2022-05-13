@@ -1,14 +1,17 @@
 import { getImg } from "./getImg.js";
 import * as tfvis from '@tensorflow/tfjs-vis'
 import * as tf from '@tensorflow/tfjs'
+import { img2x } from "./img2x";
+import { file2img } from "./file2img.js";
 
 const NUM_CLASSES=3
+const BRAND_CLASSES = ['android', 'apple', 'windows'];
 
 
 window.onload = async () =>{
     const {imgs,mapLabels} =await getImg();
     console.log(imgs,mapLabels)
-    const surface=tfvis.visor().surface({name:'输入示例'})
+    const surface=tfvis.visor().surface({name: '输入示例', styles: { height: 250 } })
     imgs.forEach(img=>{
         surface.drawArea.appendChild(img)
     })
@@ -43,5 +46,39 @@ window.onload = async () =>{
 
     //输入数据喂给截断模型
     //截断模型的input就是mobilenet的input 
-    //要变成tensor后再归一化
+    //图片要变成tensor后再归一化然后reshape
+
+    const { xs, ys } = tf.tidy(() => {
+        const xs = tf.concat(imgs.map((img)=> lessMobilenet.predict(img2x(img))));
+        const ys = tf.tensor(mapLabels);
+        return { xs, ys };
+    });
+
+    await model.fit(xs, ys, {
+        epochs: 20,
+        callbacks: tfvis.show.fitCallbacks(
+            { name: '训练效果' },
+            ['loss'],
+            { callbacks: ['onEpochEnd'] }
+        )
+    });
+
+    window.predict = async (file) => {
+        const img = await file2img(file);
+        document.body.appendChild(img);
+        const pred = tf.tidy(() => {
+            const x = img2x(img);
+            const input = lessMobilenet.predict(x);
+            return model.predict(input);
+        });
+
+        const index = pred.argMax(1).dataSync()[0];
+        setTimeout(() => {
+            alert(`预测结果：${BRAND_CLASSES[index]}`);
+        }, 0);
+    };
+
+    window.download = async () => {
+        await model.save('downloads://model');
+    };
 }
