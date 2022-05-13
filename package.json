@@ -1,0 +1,9 @@
+{
+  "name": "tfjsbrand",
+  "version": "1.0.0",
+  "description": "品牌识别",
+  "main": "index.js",
+  "repository": "git@github.com:guaqiu5/brandRecognition.git",
+  "author": "张进霖 <zhangjinlin1@xiaomi.com>",
+  "license": "MIT"
+}
